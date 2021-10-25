@@ -133,16 +133,18 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
         if experiment.distribution == "lognormal":
             data_results[4] = sp[0]  # value of mu MOM
             data_results[5] = np.sqrt(sp[1])  # Value of sigma MOM
+
             if (
                 np.count_nonzero(t) == 1
             ):  # is there only one bin to be considered? then naive inference
                 data_results[6] = 3  # Inference grade 3 : Naive inference
-
             else:  # in the remaining case, we can deploy the mle framework to improve the mom estimation
                 rep_sp = np.log(
                     np.array([sp[0], np.sqrt(sp[1])])
                 )  # initial value for log(mu,sigma)
+                print("ok hereeee")
                 res = minimize(neg_ll_rep, rep_sp, args=(i, experiment), method="Nelder-Mead")
+                print("ok here")
                 c, d = res.x
                 data_results[0], data_results[1] = np.exp(c), np.exp(d)
                 # Compute confidence intervals with hessian
