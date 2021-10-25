@@ -159,7 +159,7 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
                             if experiment.distribution == "lognormal":
                                 jacobian = np.diag((1, 1))
                             e, f = np.sqrt(
-                                np.diag(np.matmul(np.matmul(jacobian, inv_jacobian), jacobian.t))
+                                np.diag(np.matmul(np.matmul(jacobian, inv_jacobian), jacobian.T))
                             )
                             data_results[2] = e
                             data_results[3] = f
@@ -218,7 +218,7 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
     return data_results
 
 
-def inference(p, q, experiment):
+def parallel_inference(p, q, experiment):
     """Wrapper for parallel inference.
 
     Args:
