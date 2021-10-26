@@ -16,7 +16,8 @@ setup(
     zip_safe=False,
     entry_points={
         "console_scripts": [
-            "process=forecast.get_results:main",
+            "infer=forecast.inference_main:main",
+            "generate=forecast.simulation_main:main",
         ]
     },
 )

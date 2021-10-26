@@ -47,6 +47,7 @@ class Simulation:
             self.partitioning = np.log(np.logspace(0, np.log10(self.fmax), bins + 1))
         elif distribution == "gamma":
             partitioning = np.logspace(0, np.log10(self.fmax), bins + 1)
+            partitioning = np.logspace(0, np.log10(self.fmax), bins + 1)
             partitioning[0] = 0
             self.partitioning = partitioning
         self.ratio_amplification = (

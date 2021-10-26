@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 
 # mypy: ignore-errors
-from forecast.inference import parallel_inference
+from forecast.inference_steps import parallel_inference
 from forecast.util.experiment import Experiment
 
 
