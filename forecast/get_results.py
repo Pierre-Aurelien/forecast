@@ -86,9 +86,9 @@ def main():  # noqa: CCR001
     )
     print(my_experiment.nj)
     if args.end_index == "sample":
-        last_idx = diversity
-    else:
         last_idx = 10
+    else:
+        last_idx = diversity
 
     parallel_inference(args.first_index, last_idx, my_experiment).to_csv(
         output_path / "results.csv", index=False

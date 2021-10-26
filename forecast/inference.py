@@ -154,7 +154,7 @@ def get_confidence_intervals(i, c, d, experiment):
                 np.linalg.eigvals(hessian_ndt) > 0
             ):  # Check if the environment around the minimum is decribed by a parabola
                 inv_hessian = np.linalg.inv(hessian_ndt)  # inverse of observed fischer
-                jacobian = np.diag(np.exp(c), np.exp(d))
+                jacobian = np.diag(np.array([np.exp(c), np.exp(d)]))
                 e, f = np.sqrt(np.diag(np.matmul(np.matmul(jacobian, inv_hessian), jacobian.T)))
                 e6 = 1  # Inference grade 1 : ML inference  successful
             else:
@@ -182,25 +182,21 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
             t
         )  # Scoring of the data- How lopsided is the read count? all on the left-right border?
         sp = starting_point(i, experiment)
+        print("ve reached")
         # the four next lines provide the MOM estimates on a,b, mu and sigma
         data_results[4] = sp[0]  # value of mu MOM
         data_results[5] = np.sqrt(sp[1])  # Value of sigma MOM
+
+        print("hey boy,", np.count_nonzero(t))
         if np.count_nonzero(t) == 1:  # is there only one bin to be considered? then naive inference
             data_results[6] = 3  # Inference grade 3 : Naive inference
-
-            data_results[4] = sp[0]  # value of mu MOM
-            data_results[5] = np.sqrt(sp[1])  # Value of sigma MOM
-
-            if (
-                np.count_nonzero(t) == 1
-            ):  # is there only one bin to be considered? then naive inference
-                data_results[6] = 3  # Inference grade 3 : Naive inference
-            else:  # in the remaining case, we can deploy the mle framework to improve the mom estimation
-                c, d = ml_optimisation(i, sp, experiment)
-                data_results[0], data_results[1] = np.exp(c), np.exp(d)
-                data_results[2], data_results[3], data_results[6] = get_confidence_intervals(
-                    i, c, d, experiment
-                )
+        else:  # in the remaining case, we can deploy the mle framework to improve the mom estimation
+            print("ve reached")
+            c, d = ml_optimisation(i, sp, experiment)
+            data_results[0], data_results[1] = np.exp(c), np.exp(d)
+            data_results[2], data_results[3], data_results[6] = get_confidence_intervals(
+                i, c, d, experiment
+            )
     else:
         data_results[6] = 4  # Inference grade 4: No inference is possible
     return data_results
