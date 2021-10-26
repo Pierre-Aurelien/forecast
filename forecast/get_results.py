@@ -12,7 +12,6 @@ from forecast.util.experiment import Experiment
 def parse_args():
     """Parse arguments."""
     parser = argparse.ArgumentParser(description="Inference of Flow-Seq dataset.")
-    parser.add_argument("--bins", type=int, default=8, help="Number of bins.")
     parser.add_argument("--f_max", type=float, default=1e5, help="Fluorescence max of the FACS.")
     parser.add_argument(
         "--distribution", type=str, default="lognormal", help="Fluorescence distribution name"
@@ -44,7 +43,7 @@ def parse_args():
     parser.add_argument(
         "--output_path",
         type=Path,
-        default="out/inference_results" + datetime.now().strftime("%Y%m%d-%H%M%S"),
+        default="out/inference_" + datetime.now().strftime("%Y%m%d-%H%M%S"),
         help="Path for the output folder.",
     )
     args = parser.parse_args()
@@ -57,25 +56,30 @@ def main():  # noqa: CCR001
     args = parse_args()
 
     output_path = args.output_path
-
-    cells_bins = pd.read_csv(Path(args.metadata_path) / "cells_bins.csv").to_numpy()
-    reads = pd.read_csv(Path(args.metadata_path) / "reads.csv").to_numpy()
-    sequencing = pd.read_csv(Path(args.metadata_path) / "sequencing.csv").to_numpy()
+    cells_bins = (
+        pd.read_csv(Path(args.metadata_path) / "cells_bins.csv", header=None)
+        .to_numpy()
+        .astype(float)[0]
+    )
+    print("cells bins are", cells_bins)
+    reads = (
+        pd.read_csv(Path(args.metadata_path) / "reads.csv", header=None).to_numpy().astype(float)[0]
+    )
+    sequencing = (
+        pd.read_csv(Path(args.metadata_path) / "sequencing.csv", header=None).to_numpy().astype(int)
+    )
 
     diversity = len(sequencing[:, 0])
-
-    if str(output_path).index("train"):
-        output_path = Path(str(output_path).replace("train", "train_" + args.model))
+    bins = int(len(sequencing[0, :]))
     output_path.mkdir(parents=True, exist_ok=True)
-
     # Experiment Class
     my_experiment = Experiment(
-        args.bins, diversity, cells_bins, reads, sequencing, args.f_max, args.distribution
+        bins, diversity, cells_bins, reads, sequencing, args.f_max, args.distribution
     )
+    print(my_experiment.nj)
+    print("ive arrived here")
 
-    parallel_inference(0, diversity, my_experiment).to_csv(
-        args.output_path, index=False, header=True
-    )
+    parallel_inference(0, 10, my_experiment).to_csv(output_path / "results.csv", index=False)
 
 
 if __name__ == "__main__":

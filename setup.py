@@ -16,14 +16,7 @@ setup(
     zip_safe=False,
     entry_points={
         "console_scripts": [
-            "process=gnn.data.process:main",
-            "train=gnn.train:main",
-            "score=gnn.score:main",
-            "random_split=gnn.data.random_split:main",
-            "s3_cmd=gnn.s3.s3_cmd:main",
-            "analysis_utils=gnn.analysis.analysis_utils:main",
-            "analysis_pyrosetta=gnn.analysis.pose_interface_analysis:main",
-            "analysis_arpeggio=gnn.analysis.arpeggio.interaction_analysis:main",
+            "process=forecast.get_results:main",
         ]
     },
 )
