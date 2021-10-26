@@ -43,7 +43,7 @@ def parse_args():
     parser.add_argument(
         "--output_path",
         type=Path,
-        default="out/inference_results" + datetime.now().strftime("%Y%m%d-%H%M%S"),
+        default="out/inference_" + datetime.now().strftime("%Y%m%d-%H%M%S"),
         help="Path for the output folder.",
     )
     args = parser.parse_args()
@@ -79,7 +79,7 @@ def main():  # noqa: CCR001
     print(my_experiment.nj)
     print("ive arrived here")
 
-    parallel_inference(0, 10, my_experiment)
+    parallel_inference(0, 10, my_experiment).to_csv(output_path / "results.csv", index=False)
 
 
 if __name__ == "__main__":

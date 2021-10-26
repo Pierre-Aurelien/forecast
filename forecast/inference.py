@@ -148,9 +148,9 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
                 c, d = res.x
                 data_results[0], data_results[1] = np.exp(c), np.exp(d)
                 # Compute confidence intervals with hessian
-
-                def fi(x):
-                    neg_ll(x, i, experiment)
+                fi = lambda x: neg_ll(x, i, experiment)  # noqa E731
+                # def fi(x):
+                #     neg_ll(x, i, experiment)
 
                 fdd = nd.Hessian(fi)
                 hessian_ndt = fdd([np.exp(c), np.exp(d)])
@@ -190,8 +190,7 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
                 data_results[0], data_results[1] = np.exp(c), np.exp(d)
                 # Compute confidence intervals with hessian
 
-                def fi(x):
-                    neg_ll(x, i, experiment)
+                fi = lambda x: neg_ll(x, i, experiment)  # noqa E731
 
                 fdd = nd.Hessian(fi)
                 hessian_ndt = fdd([np.exp(c), np.exp(d)])
