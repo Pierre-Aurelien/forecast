@@ -16,8 +16,6 @@ plots*
 target*
 temp*
 concatinated.csv
-HLA*.csv
-hist*.csv
 !requirements.txt
 .idea
 *.iml

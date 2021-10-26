@@ -6,6 +6,8 @@ import scipy.stats as stats
 from joblib import Parallel, delayed
 from scipy.optimize import minimize
 
+from forecast.util.stat import ms_to_ab
+
 
 def starting_point(i, experiment):
     """Computes the starting point for ML minimisation.
@@ -116,7 +118,7 @@ def ml_optimisation(i, sp, experiment):
 
     Args:
         i: construct number
-        sp:initial conditions for optimisation
+        sp: initial conditions for optimisation
         experiment: instance of experiment class
 
     Returns:
@@ -124,10 +126,8 @@ def ml_optimisation(i, sp, experiment):
     """
     if experiment.distribution == "lognormal":
         rep_sp = np.log(np.array([sp[0], np.sqrt(sp[1])]))  # initial value for log(mu,sigma)
-    else:
-        rep_sp = np.log(
-            np.array([(sp[0] ** 2) / sp[1], (sp[1]) / sp[0]])
-        )  # initial value for log(a,b)
+    elif experiment.distribution == "gamma":
+        rep_sp = np.log(ms_to_ab(sp[0], np.sqrt(sp[1])))  # initial value for log(a,b)
     res = minimize(neg_ll_rep, rep_sp, args=(i, experiment), method="Nelder-Mead")
     c, d = res.x
     return c, d
@@ -182,16 +182,12 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
             t
         )  # Scoring of the data- How lopsided is the read count? all on the left-right border?
         sp = starting_point(i, experiment)
-        print("ve reached")
         # the four next lines provide the MOM estimates on a,b, mu and sigma
         data_results[4] = sp[0]  # value of mu MOM
         data_results[5] = np.sqrt(sp[1])  # Value of sigma MOM
-
-        print("hey boy,", np.count_nonzero(t))
         if np.count_nonzero(t) == 1:  # is there only one bin to be considered? then naive inference
             data_results[6] = 3  # Inference grade 3 : Naive inference
         else:  # in the remaining case, we can deploy the mle framework to improve the mom estimation
-            print("ve reached")
             c, d = ml_optimisation(i, sp, experiment)
             data_results[0], data_results[1] = np.exp(c), np.exp(d)
             data_results[2], data_results[3], data_results[6] = get_confidence_intervals(
