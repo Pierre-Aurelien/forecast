@@ -156,12 +156,16 @@ def get_confidence_intervals(i, c, d, experiment):
                 inv_hessian = np.linalg.inv(hessian_ndt)  # inverse of observed fischer
                 jacobian = np.diag(np.array([np.exp(c), np.exp(d)]))
                 e, f = np.sqrt(np.diag(np.matmul(np.matmul(jacobian, inv_hessian), jacobian.T)))
-                e6 = 1  # Inference grade 1 : ML inference  successful
+                grade = 1  # Inference grade 1 : ML inference  successful
             else:
-                e6 = 2  # Inference grade 2 : ML inference, although the hessian is not inverstible at the minimum... Probably an issue with the data and model mispecification
+                e, f, grade = (
+                    0,
+                    0,
+                    2,
+                )  # Inference grade 2 : ML inference, although the hessian is not inverstible at the minimum... Probably an issue with the data and model mispecification
     else:
-        e6 = 2
-    return e, f, e6
+        e, f, grade = 0, 0, 2
+    return e, f, grade
 
 
 def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001

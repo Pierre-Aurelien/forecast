@@ -8,7 +8,7 @@ import scipy.stats as stats
 from forecast.util.simulation import Simulation
 
 
-def sorting_and_sequencing(simulation: Simulation) -> np.ndarray:
+def sorting_and_sequencing(simulation: Simulation) -> Tuple[np.ndarray, np.ndarray]:
     """Perform sorting and sequencing steps.
 
     take as input the number of bins (simulation.bins), the diversity (simulation.diversity),
