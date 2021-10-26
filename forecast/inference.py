@@ -111,6 +111,59 @@ def neg_ll(theta, i, experiment):  # noqa: CCR001
     return nl
 
 
+def ml_optimisation(i, sp, experiment):
+    """Gives results of ML optimisation.
+
+    Args:
+        i: construct number
+        sp:initial conditions for optimisation
+        experiment: instance of experiment class
+
+    Returns:
+        optimised values of parameters
+    """
+    if experiment.distribution == "lognormal":
+        rep_sp = np.log(np.array([sp[0], np.sqrt(sp[1])]))  # initial value for log(mu,sigma)
+    else:
+        rep_sp = np.log(
+            np.array([(sp[0] ** 2) / sp[1], (sp[1]) / sp[0]])
+        )  # initial value for log(a,b)
+    res = minimize(neg_ll_rep, rep_sp, args=(i, experiment), method="Nelder-Mead")
+    c, d = res.x
+    return c, d
+
+
+def get_confidence_intervals(i, c, d, experiment):
+    """Computes confidence interval when available.
+
+    Args:
+        i: index of construct
+        c: first parameter (log scale)
+        d: second parameter (log scale)
+        experiment: experiment class
+
+    Returns:
+        confidence interval of original parameter, and inference grade
+    """
+    fi = lambda x: neg_ll(x, i, experiment)  # noqa E731
+    fdd = nd.Hessian(fi)
+    hessian_ndt = fdd([np.exp(c), np.exp(d)])
+    if np.isfinite(hessian_ndt).all():  # Test element-wise for finitenes of hessian
+        with np.errstate(invalid="ignore"):  # disable zero division warnings locally
+            if np.all(
+                np.linalg.eigvals(hessian_ndt) > 0
+            ):  # Check if the environment around the minimum is decribed by a parabola
+                inv_hessian = np.linalg.inv(hessian_ndt)  # inverse of observed fischer
+                jacobian = np.diag(np.exp(c), np.exp(d))
+                e, f = np.sqrt(np.diag(np.matmul(np.matmul(jacobian, inv_hessian), jacobian.T)))
+                e6 = 1  # Inference grade 1 : ML inference  successful
+            else:
+                e6 = 2  # Inference grade 2 : ML inference, although the hessian is not inverstible at the minimum... Probably an issue with the data and model mispecification
+    else:
+        e6 = 2
+    return e, f, e6
+
+
 def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
     """Conduct inference for construct i based on experimental data.
 
@@ -130,7 +183,11 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
         )  # Scoring of the data- How lopsided is the read count? all on the left-right border?
         sp = starting_point(i, experiment)
         # the four next lines provide the MOM estimates on a,b, mu and sigma
-        if experiment.distribution == "lognormal":
+        data_results[4] = sp[0]  # value of mu MOM
+        data_results[5] = np.sqrt(sp[1])  # Value of sigma MOM
+        if np.count_nonzero(t) == 1:  # is there only one bin to be considered? then naive inference
+            data_results[6] = 3  # Inference grade 3 : Naive inference
+
             data_results[4] = sp[0]  # value of mu MOM
             data_results[5] = np.sqrt(sp[1])  # Value of sigma MOM
 
@@ -139,81 +196,11 @@ def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001
             ):  # is there only one bin to be considered? then naive inference
                 data_results[6] = 3  # Inference grade 3 : Naive inference
             else:  # in the remaining case, we can deploy the mle framework to improve the mom estimation
-                rep_sp = np.log(
-                    np.array([sp[0], np.sqrt(sp[1])])
-                )  # initial value for log(mu,sigma)
-                print("ok hereeee")
-                res = minimize(neg_ll_rep, rep_sp, args=(i, experiment), method="Nelder-Mead")
-                print("ok here")
-                c, d = res.x
+                c, d = ml_optimisation(i, sp, experiment)
                 data_results[0], data_results[1] = np.exp(c), np.exp(d)
-                # Compute confidence intervals with hessian
-                fi = lambda x: neg_ll(x, i, experiment)  # noqa E731
-                # def fi(x):
-                #     neg_ll(x, i, experiment)
-
-                fdd = nd.Hessian(fi)
-                hessian_ndt = fdd([np.exp(c), np.exp(d)])
-                if np.isfinite(hessian_ndt).all():
-                    with np.errstate(invalid="ignore"):
-                        if np.all(np.linalg.eigvals(hessian_ndt) > 0):
-                            inv_jacobian = np.linalg.inv(hessian_ndt)
-                            if experiment.distribution == "lognormal":
-                                jacobian = np.diag((1, 1))
-                            e, f = np.sqrt(
-                                np.diag(np.matmul(np.matmul(jacobian, inv_jacobian), jacobian.T))
-                            )
-                            data_results[2] = e
-                            data_results[3] = f
-                            data_results[6] = 1  # Inference grade 1 : ML inference  successful
-
-                        else:
-                            data_results[
-                                6
-                            ] = 2  # Inference grade 2 : ML inference, although the hessian is not inverstible at the minimum... Probably an issue with the data and model mispecification
-                else:
-                    data_results[6] = 2
-        elif experiment.distribution == "gamma":
-            data_results[4] = sp[0]  # value of mu MOM
-            data_results[5] = np.sqrt(sp[1])  # Value of sigma MOM
-            if (
-                np.count_nonzero(t) == 1
-            ):  # is there only one bin to be considered? then naive inference
-                data_results[6] = 3  # Inference grade 3 : Naive inference
-
-            else:  # in the remaining case, we can deploy the mle framework to improve the mom estimation
-                rep_sp = np.log(
-                    np.array([(sp[0] ** 2) / sp[1], (sp[1]) / sp[0]])
-                )  # initial value for log(a,b)
-                res = minimize(neg_ll_rep, rep_sp, args=(i, experiment), method="Nelder-Mead")
-                c, d = res.x
-                data_results[0], data_results[1] = np.exp(c), np.exp(d)
-                # Compute confidence intervals with hessian
-
-                fi = lambda x: neg_ll(x, i, experiment)  # noqa E731
-
-                fdd = nd.Hessian(fi)
-                hessian_ndt = fdd([np.exp(c), np.exp(d)])
-                if np.isfinite(hessian_ndt).all():
-                    with np.errstate(invalid="ignore"):
-                        if np.all(np.linalg.eigvals(hessian_ndt) > 0):
-                            inv_jacobian = np.linalg.inv(hessian_ndt)
-                            jacobian = np.diag(
-                                (1, 1)
-                            )  # np.array([[b,a],[b/(2*np.sqrt(a)),np.sqrt(a)]])
-                            e, f = np.sqrt(
-                                np.diag(np.matmul(np.matmul(jacobian, inv_jacobian), jacobian.T))
-                            )
-                            data_results[2] = e
-                            data_results[3] = f
-                            data_results[6] = 1  # Inference grade 1 : ML inference  successful
-
-                        else:
-                            data_results[
-                                6
-                            ] = 2  # Inference grade 2 : ML inference, although the hessian is not inverstible at the minimum... Probably an issue with the data and model mispecification
-                else:
-                    data_results[6] = 2
+                data_results[2], data_results[3], data_results[6] = get_confidence_intervals(
+                    i, c, d, experiment
+                )
     else:
         data_results[6] = 4  # Inference grade 4: No inference is possible
     return data_results
