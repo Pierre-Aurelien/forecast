@@ -46,6 +46,15 @@ def parse_args():
         default="out/inference_" + datetime.now().strftime("%Y%m%d-%H%M%S"),
         help="Path for the output folder.",
     )
+    parser.add_argument(
+        "--first_index", type=int, default=0, help="Index of first construct to infer."
+    )
+    parser.add_argument(
+        "--end_index",
+        type=str,
+        default="sample",
+        help="Conduct inference all the way through or just a sample?.",
+    )
     args = parser.parse_args()
     return args
 
@@ -61,7 +70,6 @@ def main():  # noqa: CCR001
         .to_numpy()
         .astype(float)[0]
     )
-    print("cells bins are", cells_bins)
     reads = (
         pd.read_csv(Path(args.metadata_path) / "reads.csv", header=None).to_numpy().astype(float)[0]
     )
@@ -77,9 +85,14 @@ def main():  # noqa: CCR001
         bins, diversity, cells_bins, reads, sequencing, args.f_max, args.distribution
     )
     print(my_experiment.nj)
-    print("ive arrived here")
+    if args.end_index == "sample":
+        last_idx = diversity
+    else:
+        last_idx = 10
 
-    parallel_inference(0, 10, my_experiment).to_csv(output_path / "results.csv", index=False)
+    parallel_inference(args.first_index, last_idx, my_experiment).to_csv(
+        output_path / "results.csv", index=False
+    )
 
 
 if __name__ == "__main__":
