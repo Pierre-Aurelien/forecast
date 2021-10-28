@@ -15,7 +15,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Inference of Flow-Seq dataset.")
     parser.add_argument("--f_max", type=float, default=1e5, help="Fluorescence max of the FACS.")
     parser.add_argument(
-        "--distribution", type=str, default="lognormal", help="Fluorescence distribution name"
+        "--distribution", type=str, default="gamma", help="Fluorescence distribution name"
     )
     parser.add_argument(
         "--csv_sequencing",

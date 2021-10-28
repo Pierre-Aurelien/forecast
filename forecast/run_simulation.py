@@ -23,21 +23,21 @@ def parse_args():
         help="csv file with distribution parameters",
         required=False,
     )
-    parser.add_argument("--bins", type=int, default=8, help="Number of bins.")
+    parser.add_argument("--bins", type=int, default=12, help="Number of bins.")
     parser.add_argument(
-        "--size", type=float, default=1e5, help="Number of bacteria sorted trough the FACS."
+        "--size", type=float, default=1e6, help="Number of bacteria sorted trough the FACS."
     )
     parser.add_argument(
-        "--reads", type=float, default=1e5, help="Number of reads allocated to sequencing."
+        "--reads", type=float, default=1e7, help="Number of reads allocated to sequencing."
     )
     parser.add_argument(
-        "--ratio_amplification", type=float, default=1e3, help="PCR amplification ratio."
+        "--ratio_amplification", type=float, default=1e2, help="PCR amplification ratio."
     )
     parser.add_argument("--bias_library", type=bool, default=False, help="Bias in the library.")
     parser.add_argument(
         "--metadata_path",
         type=Path,
-        help="Folder path containing all results file.",
+        help="Folder path containing library data.",
         default="data",
     )
     parser.add_argument(
@@ -47,18 +47,9 @@ def parse_args():
         help="Path for the output folder.",
     )
     parser.add_argument(
-        "--first_index", type=int, default=0, help="Index of first construct to infer."
-    )
-    parser.add_argument(
-        "--end_index",
-        type=str,
-        default="sample",
-        help="Conduct inference all the way through or just a sample?.",
-    )
-    parser.add_argument(
         "--fluorescence_amplification",
         type=int,
-        default=10,
+        default=100,
         help="Ratio fluorescence/protein.",
     )
     args = parser.parse_args()
