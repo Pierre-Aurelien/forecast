@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from forecast.simulation_steps import sorting_and_sequencing
+from forecast.protocol.simulation_steps import sorting_and_sequencing
 from forecast.util.simulation import Simulation
 
 

@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from forecast.inference_steps import parallel_inference
+from forecast.protocol.inference_steps import parallel_inference
 from forecast.util.experiment import Experiment
 
 
