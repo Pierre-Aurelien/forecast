@@ -126,7 +126,7 @@ def ml_optimisation(i, sp, experiment):
     """
     if experiment.distribution == "lognormal":
         rep_sp = np.log(np.array([sp[0], np.sqrt(sp[1])]))  # initial value for log(mu,sigma)
-    elif experiment.distribution == "gamma":
+    else:
         rep_sp = np.log(ms_to_ab(sp[0], np.sqrt(sp[1])))  # initial value for log(a,b)
     res = minimize(neg_ll_rep, rep_sp, args=(i, experiment), method="Nelder-Mead")
     c, d = res.x
@@ -148,20 +148,25 @@ def get_confidence_intervals(i, c, d, experiment):
     fi = lambda x: neg_ll(x, i, experiment)  # noqa E731
     fdd = nd.Hessian(fi)
     hessian_ndt = fdd([np.exp(c), np.exp(d)])
-    if np.isfinite(hessian_ndt).all():  # Test element-wise for finitenes of hessian
+    if np.isfinite(hessian_ndt).all():  # Test element-wise for finiteness of hessian
         with np.errstate(invalid="ignore"):  # disable zero division warnings locally
             if np.all(
                 np.linalg.eigvals(hessian_ndt) > 0
-            ):  # Check if the environment around the minimum is decribed by a parabola
+            ):  # Check if the environment around the minimum is described by a parabola
                 inv_hessian = np.linalg.inv(hessian_ndt)  # inverse of observed fischer
                 jacobian = np.diag(np.array([np.exp(c), np.exp(d)]))
                 e, f = np.sqrt(np.diag(np.matmul(np.matmul(jacobian, inv_hessian), jacobian.T)))
-                e6 = 1  # Inference grade 1 : ML inference  successful
+                grade = 1  # Inference grade 1 : ML inference  successful
             else:
-                e6 = 2  # Inference grade 2 : ML inference, although the hessian is not inverstible at the minimum... Probably an issue with the data and model mispecification
+                e, f, grade = (
+                    0,
+                    0,
+                    2,
+                )  # Inference grade 2 : ML inference, although the hessian is not inverstible at the minimum...
+                # Probably an issue with the data and model mispecification
     else:
-        e6 = 2
-    return e, f, e6
+        e, f, grade = 0, 0, 2
+    return e, f, grade
 
 
 def reparameterised_ml_inference_(i, experiment) -> np.ndarray:  # noqa: CCR001

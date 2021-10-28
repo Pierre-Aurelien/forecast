@@ -3,9 +3,10 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
-from forecast.inference import parallel_inference
+from forecast.protocol.inference_steps import parallel_inference
 from forecast.util.experiment import Experiment
 
 
@@ -14,7 +15,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Inference of Flow-Seq dataset.")
     parser.add_argument("--f_max", type=float, default=1e5, help="Fluorescence max of the FACS.")
     parser.add_argument(
-        "--distribution", type=str, default="lognormal", help="Fluorescence distribution name"
+        "--distribution", type=str, default="gamma", help="Fluorescence distribution name"
     )
     parser.add_argument(
         "--csv_sequencing",
@@ -28,12 +29,12 @@ def parse_args():
         help="csv file giving the number of cells per bin",
         required=False,
     )
-    parser.add_argument(
-        "--csv_reads",
-        type=str,
-        help="csv file of number of reads per bin",
-        required=False,
-    )
+    # parser.add_argument(
+    #     "--csv_reads",
+    #     type=str,
+    #     help="csv file of number of reads per bin",
+    #     required=False,
+    # )
     parser.add_argument(
         "--metadata_path",
         type=Path,
@@ -70,12 +71,10 @@ def main():  # noqa: CCR001
         .to_numpy()
         .astype(float)[0]
     )
-    reads = (
-        pd.read_csv(Path(args.metadata_path) / "reads.csv", header=None).to_numpy().astype(float)[0]
-    )
     sequencing = (
         pd.read_csv(Path(args.metadata_path) / "sequencing.csv", header=None).to_numpy().astype(int)
     )
+    reads = np.sum(sequencing, axis=0)
 
     diversity = len(sequencing[:, 0])
     bins = int(len(sequencing[0, :]))
