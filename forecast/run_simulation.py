@@ -49,7 +49,7 @@ def parse_args():
     parser.add_argument(
         "--fluorescence_amplification",
         type=int,
-        default=100,
+        default=1,
         help="Ratio fluorescence/protein.",
     )
     args = parser.parse_args()
@@ -64,11 +64,21 @@ def main():  # noqa: CCR001
     output_path = args.output_path
 
     output_path.mkdir(parents=True, exist_ok=True)
+    if args.distribution == "gamma":
+        name_library = "library_gamma.csv"
+        theta1 = "a"
+        theta2 = "b"
+    elif args.distribution == "lognormal":
+        name_library = "library_normal.csv"
+        theta1 = "mu"
+        theta2 = "sigma"
 
-    df = pd.read_csv(Path(args.metadata_path) / "library_gamma.csv")
+    df = pd.read_csv(Path(args.metadata_path) / f"{name_library}")
 
     theta1 = df.iloc[:, 0].to_numpy()
-    theta2 = 10 * df.iloc[:, 1].to_numpy()  # Fluorescence protein ratio
+    theta2 = (
+        args.fluorescence_amplification * df.iloc[:, 1].to_numpy()
+    )  # Fluorescence protein ratio
     diversity = len(theta1)
 
     # Create an instance of class experiment
