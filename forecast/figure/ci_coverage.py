@@ -18,7 +18,9 @@ def parse_args():
         default=3,
         help="Number of standard deviation to create the confidence interval.",
     )
-
+    parser.add_argument(
+        "--distribution", type=str, default="gamma", help="Fluorescence distribution name"
+    )
     parser.add_argument(
         "--metadata_path",
         type=Path,
@@ -71,18 +73,33 @@ def main():
 
     df_estimated = pd.read_csv(Path(args.metadata_path) / "results.csv")
     filter_length = len(df_estimated)
-    df_truth = pd.read_csv(Path(args.metadata_path) / "library_gamma.csv")[:filter_length]
-    df_truth["B_Protein"] = args.fluorescence_amplification * df_truth["B_Protein"]
+    if args.distribution == "gamma":
+        name_library = "library_gamma.csv"
+        theta1 = "a"
+        theta2 = "b"
+    elif args.distribution == "lognormal":
+        name_library = "library_normal.csv"
+        theta1 = "mu"
+        theta2 = "sigma"
+
+    df_truth = pd.read_csv(Path(args.metadata_path) / f"{name_library}")[:filter_length]
+    df_truth[f"{theta2}"] = args.fluorescence_amplification * df_truth[f"{theta2}"]
 
     df = pd.concat([df_truth, df_estimated], axis=1)
-    df["a_in_CI"] = df.apply(
-        lambda row: ci_coverage(row["a_MLE"], row["A_Protein"], row["a_std"], args.ci_level), axis=1
+    df[f"{theta1}_in_CI"] = df.apply(
+        lambda row: ci_coverage(
+            row[f"{theta1}_MLE"], row[f"{theta1}"], row[f"{theta1}_std"], args.ci_level
+        ),
+        axis=1,
     )
-    coverage_a = df["a_in_CI"].mean()
-    df["b_in_CI"] = df.apply(
-        lambda row: ci_coverage(row["b_MLE"], row["B_Protein"], row["b_std"], args.ci_level), axis=1
+    coverage_a = df[f"{theta1}_in_CI"].mean()
+    df[f"{theta2}_in_CI"] = df.apply(
+        lambda row: ci_coverage(
+            row[f"{theta2}_MLE"], row[f"{theta2}"], row[f"{theta2}_std"], args.ci_level
+        ),
+        axis=1,
     )
-    coverage_b = df["b_in_CI"].mean()
+    coverage_b = df[f"{theta2}_in_CI"].mean()
     sns.despine()
 
     fig_dims = (20, 8)
@@ -90,8 +107,8 @@ def main():
     _, ax = plt.subplots(figsize=fig_dims)
     ax.errorbar(
         x,
-        (df.sort_values("A_Protein", ascending=False)["a_MLE"]),
-        yerr=3 * (df.sort_values("A_Protein", ascending=False)["a_std"]),
+        (df.sort_values(f"{theta1}", ascending=False)[f"{theta1}_MLE"]),
+        yerr=3 * (df.sort_values(f"{theta1}", ascending=False)[f"{theta1}_std"]),
         fmt=" ",
         color="tab:brown",
         marker="o",
@@ -102,11 +119,11 @@ def main():
         label="ML estimator",
         zorder=1,
     )
-    labl = df.sort_values("A_Protein", ascending=False)["a_in_CI"].to_numpy()
+    labl = df.sort_values(f"{theta1}", ascending=False)[f"{theta1}_in_CI"].to_numpy()
     color = ["tab:orange" if item == 1 else "tab:red" for item in labl]
     ax.scatter(
         x,
-        (df.sort_values("A_Protein", ascending=False)["A_Protein"]),
+        (df.sort_values(f"{theta1}", ascending=False)[f"{theta1}"]),
         s=20,
         label="Ground truth",
         color=color,
@@ -114,7 +131,7 @@ def main():
     )
     ax.scatter(
         x,
-        (df.sort_values("A_Protein", ascending=False)["a_MOM"]),
+        (df.sort_values(f"{theta1}", ascending=False)[f"{theta1}_MOM"]),
         s=50,
         label="MOM estimator",
         c="#4f7942",
@@ -138,8 +155,8 @@ def main():
     _, ax = plt.subplots(figsize=fig_dims)
     ax.errorbar(
         x,
-        (df.sort_values("B_Protein", ascending=False)["b_MLE"]),
-        yerr=2 * (df.sort_values("B_Protein", ascending=False)["a_std"]),
+        (df.sort_values(f"{theta2}", ascending=False)[f"{theta2}_MLE"]),
+        yerr=2 * (df.sort_values(f"{theta2}", ascending=False)[f"{theta2}_std"]),
         fmt=" ",
         color="tab:brown",
         marker="o",
@@ -150,11 +167,11 @@ def main():
         label="ML estimator",
         zorder=1,
     )
-    labl = df.sort_values("B_Protein", ascending=False)["b_in_CI"].to_numpy()
+    labl = df.sort_values(f"{theta2}", ascending=False)[f"{theta2}_in_CI"].to_numpy()
     color = ["tab:orange" if item == 1 else "tab:red" for item in labl]
     ax.scatter(
         x,
-        (df.sort_values("B_Protein", ascending=False)["B_Protein"]),
+        (df.sort_values(f"{theta2}", ascending=False)[f"{theta2}"]),
         s=20,
         label="Ground truth",
         color=color,
@@ -162,7 +179,7 @@ def main():
     )
     ax.scatter(
         x,
-        (df.sort_values("B_Protein", ascending=False)["b_MOM"]),
+        (df.sort_values(f"{theta2}", ascending=False)[f"{theta2}_MOM"]),
         s=50,
         label="MOM estimator",
         c="#4f7942",
