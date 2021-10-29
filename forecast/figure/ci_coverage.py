@@ -12,36 +12,13 @@ import seaborn as sns
 def parse_args():
     """Parse arguments."""
     parser = argparse.ArgumentParser(description="Check CI coverage.")
-    parser.add_argument("--f_max", type=float, default=1e5, help="Fluorescence max of the FACS.")
-    parser.add_argument(
-        "--distribution", type=str, default="gamma", help="Fluorescence distribution name"
-    )
-    parser.add_argument(
-        "--csv_ground_truth",
-        type=str,
-        help="csv file with ground truth distribution parameters",
-        required=False,
-    )
-    parser.add_argument(
-        "--csv_estimated",
-        type=str,
-        help="csv file with estimated distribution parameters",
-        required=False,
-    )
-    parser.add_argument("--bins", type=int, default=12, help="Number of bins.")
     parser.add_argument(
         "--ci_level",
         type=int,
         default=3,
         help="Number of standard deviation to create the confidence interval.",
     )
-    parser.add_argument(
-        "--reads", type=float, default=1e7, help="Number of reads allocated to sequencing."
-    )
-    parser.add_argument(
-        "--ratio_amplification", type=float, default=1e2, help="PCR amplification ratio."
-    )
-    parser.add_argument("--bias_library", type=bool, default=False, help="Bias in the library.")
+
     parser.add_argument(
         "--metadata_path",
         type=Path,
