@@ -251,4 +251,6 @@ def parallel_inference(p, q, experiment):
             errors="raise",
             inplace=True,
         )
+        df["a_MOM"] = df.apply(lambda x: ms_to_ab(x.mu_MOM, x.sigma_MOM)[0], axis=1)
+        df["b_MOM"] = df.apply(lambda x: ms_to_ab(x.mu_MOM, x.sigma_MOM)[1], axis=1)
     return df

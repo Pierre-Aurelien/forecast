@@ -18,6 +18,7 @@ setup(
         "console_scripts": [
             "infer=forecast.run_inference:main",
             "generate=forecast.run_simulation:main",
+            "plot_ci=forecast.figure.ci_coverage:main",
         ]
     },
 )
