@@ -145,16 +145,18 @@ def get_confidence_intervals(i, c, d, experiment):
     Returns:
         confidence interval of original parameter, and inference grade
     """
-    fi = lambda x: neg_ll(x, i, experiment)  # noqa E731
-    fdd = nd.Hessian(fi)
-    hessian_ndt = fdd([np.exp(c), np.exp(d)])
-    if np.isfinite(hessian_ndt).all():  # Test element-wise for finiteness of hessian
+    # fi = lambda x: neg_ll_rep(x, i, experiment)  # noqa E731
+    fisher_information = nd.Hessian(lambda x: neg_ll_rep(x, i, experiment))  # noqa E731
+    observed_fisher = fisher_information([c, d])
+    if np.isfinite(observed_fisher).all():  # Test element-wise for finiteness of hessian
         with np.errstate(invalid="ignore"):  # disable zero division warnings locally
             if np.all(
-                np.linalg.eigvals(hessian_ndt) > 0
+                np.linalg.eigvals(observed_fisher) > 0
             ):  # Check if the environment around the minimum is described by a parabola
-                inv_hessian = np.linalg.inv(hessian_ndt)  # inverse of observed fischer
-                jacobian = np.diag(np.array([np.exp(c), np.exp(d)]))
+                inv_hessian = np.linalg.inv(observed_fisher)  # inverse of observed fischer
+                jacobian = np.diag(
+                    np.array([np.exp(c), np.exp(d)])
+                )  # jacobian of exp transformation at ml estimates
                 e, f = np.sqrt(np.diag(np.matmul(np.matmul(jacobian, inv_hessian), jacobian.T)))
                 grade = 1  # Inference grade 1 : ML inference  successful
             else:
