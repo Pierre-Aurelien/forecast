@@ -58,6 +58,13 @@ def sorting_and_sequencing(simulation: Simulation) -> Tuple[np.ndarray, np.ndarr
 
     #### STEP 3 - Compute binning
 
+    # nij = np.empty((simulation.diversity, simulation.bins))
+    # for i in range(simulation.diversity):
+    #     e = np.random.gamma(simulation.theta1[i], simulation.theta2[i], ni[i])
+    #     nij[i, :] = np.histogram(e, bins=simulation.partitioning)[0]
+    #
+    # nij =nij.astype(int)
+
     ## Compute ratios qji
     qij = np.fromfunction(
         sorting_protein_matrix_populate, (simulation.diversity, simulation.bins), dtype=int
@@ -73,10 +80,10 @@ def sorting_and_sequencing(simulation: Simulation) -> Tuple[np.ndarray, np.ndarr
 
     #### STEP 5 - Compute Reads allocation
     n = np.sum(nij)
-    n = np.sum(nij, axis=0)
+    nj = np.sum(nij, axis=0)
     reads = np.floor(
-        n * simulation.reads / n
-    )  # Allocate reads with repsect to the number of cells srted in each bin
+        n * simulation.reads / nj
+    )  # Allocate reads with respect to the number of cells sorted in each bin
     #### STEP 6 - DnA sampling
 
     sij = np.zeros((simulation.diversity, simulation.bins))
