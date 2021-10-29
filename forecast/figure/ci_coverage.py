@@ -36,7 +36,7 @@ def parse_args():
     parser.add_argument(
         "--fluorescence_amplification",
         type=int,
-        default=10,
+        default=1,
         help="Ratio fluorescence/protein.",
     )
     args = parser.parse_args()
@@ -72,7 +72,7 @@ def main():
     output_path.mkdir(parents=True, exist_ok=True)
 
     df_estimated = pd.read_csv(Path(args.metadata_path) / "results.csv")
-    filter_length = len(df_estimated)
+
     if args.distribution == "gamma":
         name_library = "library_gamma.csv"
         theta1 = "a"
@@ -82,10 +82,17 @@ def main():
         theta1 = "mu"
         theta2 = "sigma"
 
-    df_truth = pd.read_csv(Path(args.metadata_path) / f"{name_library}")[:filter_length]
+    df_truth = pd.read_csv(Path(args.metadata_path) / f"{name_library}")
     df_truth[f"{theta2}"] = args.fluorescence_amplification * df_truth[f"{theta2}"]
 
     df = pd.concat([df_truth, df_estimated], axis=1)
+
+    # quality filtering
+    df = df[df["Score"] <= 0.7]  # Drop constructs too much on the border
+    df = df[df["Inference_grade"] == 1]  # Keep constructs with good shape
+    df = df[df[f"{theta1}_std"] < df[f"{theta1}_MLE"]]
+    df = df[df[f"{theta2}_std"] < df[f"{theta2}_MLE"]]
+
     df[f"{theta1}_in_CI"] = df.apply(
         lambda row: ci_coverage(
             row[f"{theta1}_MLE"], row[f"{theta1}"], row[f"{theta1}_std"], args.ci_level
@@ -103,7 +110,7 @@ def main():
     sns.despine()
 
     fig_dims = (20, 8)
-    x = np.linspace(0, 2, filter_length)
+    x = np.linspace(0, 2, len(df))
     _, ax = plt.subplots(figsize=fig_dims)
     ax.errorbar(
         x,
@@ -141,10 +148,10 @@ def main():
 
     ax.axes.get_xaxis().set_visible(False)
     plt.xlabel("Construct Number")
-    plt.ylabel("Estimated a parameter", fontsize=16)
+    plt.ylabel(f"Estimated {theta1}  parameter", fontsize=16)
     plt.title(f"Confidence Intervals MLE. Coverage is {coverage_a}.")
     plt.savefig(
-        Path(output_path) / "a_confidence_interval.png",
+        Path(output_path) / f"{theta1}_confidence_interval.png",
         transparent=True,
         bbox_inches="tight",
         dpi=600,
@@ -188,10 +195,10 @@ def main():
     ax.legend(frameon=False, fontsize=16, markerscale=1.5)
     ax.axes.get_xaxis().set_visible(False)
     plt.xlabel("Construct Number")
-    plt.ylabel("Estimated b parameter", fontsize=16)
+    plt.ylabel(f"Estimated {theta2} parameter", fontsize=16)
     plt.title(f"Confidence Intervals MLE. Coverage is {coverage_b} ")
     plt.savefig(
-        Path(output_path) / "b_confidence_interval.png",
+        Path(output_path) / f"{theta2}_confidence_interval.png",
         transparent=True,
         bbox_inches="tight",
         dpi=600,

@@ -29,12 +29,6 @@ def parse_args():
         help="csv file giving the number of cells per bin",
         required=False,
     )
-    # parser.add_argument(
-    #     "--csv_reads",
-    #     type=str,
-    #     help="csv file of number of reads per bin",
-    #     required=False,
-    # )
     parser.add_argument(
         "--metadata_path",
         type=Path,
