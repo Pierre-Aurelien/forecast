@@ -84,7 +84,7 @@ def main():  # noqa: CCR001
         bins, diversity, cells_bins, reads, sequencing, args.f_max, args.distribution
     )
     if args.end_index == "sample":
-        last_idx = 10
+        last_idx = 100
     else:
         last_idx = diversity
 

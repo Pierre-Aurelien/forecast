@@ -112,12 +112,19 @@ def main():
         color=color,
         zorder=10,
     )
-    # ax.scatter(x,(df.sort_values('A_Protein',ascending=False)['a_MOM']),s=50,label='MOM estimator',c='#4f7942',zorder=13)
+    ax.scatter(
+        x,
+        (df.sort_values("A_Protein", ascending=False)["a_MOM"]),
+        s=50,
+        label="MOM estimator",
+        c="#4f7942",
+        zorder=13,
+    )
     ax.legend(frameon=False, fontsize=16, markerscale=1.5)
 
     ax.axes.get_xaxis().set_visible(False)
     plt.xlabel("Construct Number")
-    plt.ylabel("Estimated mean protein copy number", fontsize=16)
+    plt.ylabel("Estimated a parameter", fontsize=16)
     plt.title(f"Confidence Intervals MLE. Coverage is {coverage_a}.")
     plt.savefig(
         Path(output_path) / "a_confidence_interval.png",
@@ -153,11 +160,18 @@ def main():
         color=color,
         zorder=10,
     )
-    # ax.scatter(x,(df.sort_values('B_Protein',ascending=False)['b_MOM']),s=50,label='MOM estimator',c='#4f7942',zorder=13)
+    ax.scatter(
+        x,
+        (df.sort_values("B_Protein", ascending=False)["b_MOM"]),
+        s=50,
+        label="MOM estimator",
+        c="#4f7942",
+        zorder=13,
+    )
     ax.legend(frameon=False, fontsize=16, markerscale=1.5)
     ax.axes.get_xaxis().set_visible(False)
     plt.xlabel("Construct Number")
-    plt.ylabel("Estimated std protein copy number", fontsize=16)
+    plt.ylabel("Estimated b parameter", fontsize=16)
     plt.title(f"Confidence Intervals MLE. Coverage is {coverage_b} ")
     plt.savefig(
         Path(output_path) / "b_confidence_interval.png",
