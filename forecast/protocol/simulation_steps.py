@@ -3,7 +3,6 @@ import random
 from typing import Tuple
 
 import numpy as np
-import scipy.stats as stats
 
 from forecast.util.simulation import Simulation
 
@@ -25,24 +24,7 @@ def sorting_and_sequencing(simulation: Simulation) -> Tuple[np.ndarray, np.ndarr
         Return the (simulation.diversity*Bins) matrix resulting from the sequencing
         and the sorting matrix n (number of cell sorted in each bin)
     """
-
-    def sorting_protein_matrix_populate(i, j):
-        if simulation.distribution == "lognormal":
-            element_matrix = stats.norm.cdf(
-                simulation.partitioning[j + 1], loc=simulation.theta1[i], scale=simulation.theta2[i]
-            ) - stats.norm.cdf(
-                simulation.partitioning[j], loc=simulation.theta1[i], scale=simulation.theta2[i]
-            )
-        else:
-            element_matrix = stats.gamma.cdf(
-                simulation.partitioning[j + 1], a=simulation.theta1[i], scale=simulation.theta2[i]
-            ) - stats.gamma.cdf(
-                simulation.partitioning[j], a=simulation.theta1[i], scale=simulation.theta2[i]
-            )
-        return element_matrix
-
     #### STEP 1 - Draw the ratio p_concentration
-
     if simulation.bias_library:
         params = np.ones(simulation.diversity)
         dirichlet_sample = [random.gammavariate(a, 1) for a in params]
@@ -53,32 +35,27 @@ def sorting_and_sequencing(simulation: Simulation) -> Tuple[np.ndarray, np.ndarr
         p_concentration = [1 / simulation.diversity] * simulation.diversity
 
     #### STEP 2 - Draw the sample sizes= of each genetic construct
-
     ni = np.random.multinomial(simulation.size, p_concentration, size=1)[0]
 
     #### STEP 3 - Compute binning
+    nij = np.empty((simulation.diversity, simulation.bins))
+    for i in range(simulation.diversity):
+        e = np.random.gamma(simulation.theta1[i], simulation.theta2[i], ni[i])
+        nij[i, :] = np.histogram(e, bins=simulation.partitioning)[0]
 
-    ## Compute ratios qji
-    qij = np.fromfunction(
-        sorting_protein_matrix_populate, (simulation.diversity, simulation.bins), dtype=int
-    )
-
-    ## Compute nij
-    nij = qij * ni[:, np.newaxis]
-    nij = np.floor(nij)  # Convert to Integer numbers
+    nij = nij.astype(int)
 
     #### STEP 4 - PCR amplification
-
     nij_amplified = np.multiply(nij, simulation.ratio_amplification)
 
     #### STEP 5 - Compute Reads allocation
     n = np.sum(nij)
-    n = np.sum(nij, axis=0)
+    nj = np.sum(nij, axis=0)
     reads = np.floor(
-        n * simulation.reads / n
-    )  # Allocate reads with repsect to the number of cells srted in each bin
-    #### STEP 6 - DnA sampling
+        nj * simulation.reads / n
+    )  # Allocate reads with respect to the number of cells sorted in each bin
 
+    #### STEP 6 - DNA sampling
     sij = np.zeros((simulation.diversity, simulation.bins))
 
     # Compute ratios& Multinomial sampling
@@ -88,7 +65,7 @@ def sorting_and_sequencing(simulation: Simulation) -> Tuple[np.ndarray, np.ndarr
         else:
             concentration_vector = np.zeros(simulation.diversity)
         sij[:, j] = np.random.multinomial(reads[j], concentration_vector, size=1)
-    return (sij, n)
+    return (sij, nj)
 
 
 def sorting(simulation: Simulation) -> np.ndarray:
@@ -102,22 +79,6 @@ def sorting(simulation: Simulation) -> np.ndarray:
 
     """
     #### STEP 1 - Draw the ratio p_concentration
-
-    def sorting_protein_matrix_populate(i, j):
-        if simulation.distribution == "lognormal":
-            element_matrix = stats.norm.cdf(
-                simulation.partitioning[j + 1], loc=simulation.theta1[i], scale=simulation.theta2[i]
-            ) - stats.norm.cdf(
-                simulation.partitioning[j], loc=simulation.theta1[i], scale=simulation.theta2[i]
-            )
-        else:
-            element_matrix = stats.gamma.cdf(
-                simulation.partitioning[j + 1], a=simulation.theta1[i], scale=simulation.theta2[i]
-            ) - stats.gamma.cdf(
-                simulation.partitioning[j], a=simulation.theta1[i], scale=simulation.theta2[i]
-            )
-        return element_matrix
-
     if simulation.bias_library:
         params = np.ones(simulation.diversity)
         dirichlet_sample = [random.gammavariate(a, 1) for a in params]
@@ -126,20 +87,15 @@ def sorting(simulation: Simulation) -> np.ndarray:
         p_concentration = [1 / simulation.diversity] * simulation.diversity
 
     #### STEP 2 - Draw the sample sizes= of each genetic construct
-
     ni = np.random.multinomial(simulation.size, p_concentration, size=1)[0]
-    # ni=ni[0]
 
     #### STEP 3 - Compute binning
+    nij = np.empty((simulation.diversity, simulation.bins))
+    for i in range(simulation.diversity):
+        e = np.random.gamma(simulation.theta1[i], simulation.theta2[i], ni[i])
+        nij[i, :] = np.histogram(e, bins=simulation.partitioning)[0]
 
-    ## Compute ratios qji
-    qij = np.fromfunction(
-        sorting_protein_matrix_populate, (simulation.diversity, simulation.bins), dtype=int
-    )
-
-    ## Compute nij
-    nij = qij * ni[:, np.newaxis]
-    nij = np.floor(nij)  # Convert to Integer numbers
+    nij = nij.astype(int)
     return nij
 
 
@@ -156,14 +112,13 @@ def sequencing(simulation: Simulation, nij: np.ndarray) -> Tuple[np.ndarray, np.
 
     """
     #### STEP 4 - PCR amplification
-
     nij_amplified = np.multiply(nij, simulation.ratio_amplification)
 
     #### STEP 5 - Compute Reads allocation
     n = np.sum(nij)
-    n = np.sum(nij, axis=0)
+    nj = np.sum(nij, axis=0)
     reads = np.floor(
-        n * simulation.reads / n
+        nj * simulation.reads / n
     )  # Allocate reads with respect to the number of cells srted in each bin
     #### STEP 6 - DnA sampling
 
@@ -176,4 +131,4 @@ def sequencing(simulation: Simulation, nij: np.ndarray) -> Tuple[np.ndarray, np.
         else:
             concentration_vector = np.zeros(simulation.diversity)
         sij[:, j] = np.random.multinomial(reads[j], concentration_vector, size=1)
-    return sij, n
+    return sij, nj

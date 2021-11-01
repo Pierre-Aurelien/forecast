@@ -28,7 +28,7 @@ def parse_args():
         "--size", type=float, default=1e6, help="Number of bacteria sorted trough the FACS."
     )
     parser.add_argument(
-        "--reads", type=float, default=1e7, help="Number of reads allocated to sequencing."
+        "--reads", type=float, default=1e5, help="Number of reads allocated to sequencing."
     )
     parser.add_argument(
         "--ratio_amplification", type=float, default=1e2, help="PCR amplification ratio."
