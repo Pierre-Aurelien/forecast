@@ -19,6 +19,7 @@ setup(
             "infer=forecast.run_inference:main",
             "generate=forecast.run_simulation:main",
             "plot_ci=forecast.figure.ci_coverage:main",
+            "pcr_ci=forecast.investigation.pcr_coverage:main",
         ]
     },
 )
