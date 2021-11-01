@@ -69,7 +69,6 @@ def main():  # noqa: CCR001
         pd.read_csv(Path(args.metadata_path) / "sequencing.csv", header=None).to_numpy().astype(int)
     )
     reads = np.sum(sequencing, axis=0)
-
     diversity = len(sequencing[:, 0])
     bins = int(len(sequencing[0, :]))
     output_path.mkdir(parents=True, exist_ok=True)

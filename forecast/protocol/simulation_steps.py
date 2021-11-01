@@ -82,9 +82,9 @@ def sorting_and_sequencing(simulation: Simulation) -> Tuple[np.ndarray, np.ndarr
     n = np.sum(nij)
     nj = np.sum(nij, axis=0)
     reads = np.floor(
-        n * simulation.reads / nj
+        nj * simulation.reads / n
     )  # Allocate reads with respect to the number of cells sorted in each bin
-    #### STEP 6 - DnA sampling
+    #### STEP 6 - DNA sampling
 
     sij = np.zeros((simulation.diversity, simulation.bins))
 
@@ -95,7 +95,7 @@ def sorting_and_sequencing(simulation: Simulation) -> Tuple[np.ndarray, np.ndarr
         else:
             concentration_vector = np.zeros(simulation.diversity)
         sij[:, j] = np.random.multinomial(reads[j], concentration_vector, size=1)
-    return (sij, n)
+    return (sij, nj)
 
 
 def sorting(simulation: Simulation) -> np.ndarray:
